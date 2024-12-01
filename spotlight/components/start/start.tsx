@@ -7,16 +7,18 @@ type Props = StackScreenProps<RootStackParamList, 'Start'>;
 
 export default function Start({ navigation } : Props) {
   const [fontsLoaded] = useFonts({
-    PretendardSemiBold: require("../../assets/fonts/Pretendard-SemiBold.ttf"),
-    PretendardRegular: require("../../assets/fonts/Pretendard-Regular.ttf")
+    PretendardSemiBold: require("../../assets/fonts/otf/Pretendard-SemiBold.otf"),
+    PretendardRegular: require("../../assets/fonts/otf/Pretendard-Regular.otf")
   });
-  
+
   if (!fontsLoaded) return null;
+
+  const basketball = require("../../assets/Basketball.png")
 
   return (
     <View style={styles.container}>
         <View style={styles.basketball}>
-          <Image style={styles.size} source={require('../../assets/Basketball.svg')}/>
+          <Image source={basketball} width={200} height={200} />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.bold}>스포트 라이트</Text>

@@ -4,13 +4,14 @@ import { useNavigation } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
 import React, { useState } from 'react';
+import { normalize } from '../../normallize';
 
-type Props = StackScreenProps<RootStackParamList, 'Start'>;
+type Props = StackScreenProps<RootStackParamList, 'Select'>;
 
 export default function Select({ navigation } : Props) {
   const [fontsLoaded] = useFonts({
-    PretendardSemimini_title: require("../../assets/fonts/Pretendard-SemiBold.ttf"),
-    PretendardRegular: require("../../assets/fonts/Pretendard-Regular.ttf")
+    PretendardSemiBold: require("../../assets/fonts/otf/Pretendard-SemiBold.otf"),
+    PretendardRegular: require("../../assets/fonts/otf/Pretendard-Regular.otf")
   });
 
   const [selectedButtons, setSelectedButtons] = useState(new Array(16).fill(false));
@@ -22,7 +23,7 @@ export default function Select({ navigation } : Props) {
   };
 
   const buttonLabels = [
-    '헬스/G.X', '퓨전', '아쿠아로빅', '단전',
+    '헬스/G.X', '퓨전', '아쿠아로빅', '탁구',
     '스포츠/라인 댄스', '수영', '필라테스', '풋살/축구',
     '배드민턴', '요가/필라테스', '스피닝', '서킷트레이닝',
     '라켓볼', '빙상', '무도프로그램', '기타체육프로그램',
@@ -75,19 +76,19 @@ const styles = StyleSheet.create({
         padding: 20,
       },
       titleContainer: {
-        alignSelf: 'center',
-        width: 311,
+        marginTop: normalize(80),
+        marginBottom: normalize(28),
       },
       title: {
         color: '#FFFFFF',
-        fontFamily: "Pretendardsemibold",
+        fontFamily: "PretendardSemiBold",
         textAlign: 'left',
         fontSize: 28,
 
       },
       title2:{
         color: '#FFFFFF',
-        fontFamily: "Pretendard",
+        fontFamily: "PretendardRegular",
         fontSize: 18,
 
       },
@@ -106,7 +107,7 @@ const styles = StyleSheet.create({
       },
       buttonText: {
         color: "#fff",
-        fontFamily: "PretendardSemiBold",
+        fontFamily: "PretendardRegular",
         textAlign: 'center',
         fontSize: 14,
       },
@@ -114,6 +115,7 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
+        marginBottom: normalize(30),
       },
       button1: {
         width: '48%', // 두 버튼이 한 줄에 배치되도록 설정
@@ -124,7 +126,7 @@ const styles = StyleSheet.create({
         alignItems: 'center',
         marginBottom: 15,
         borderWidth: 2,
-        borderColor: '#252932', // 기본 테두리 색상
+        borderColor: '#35383F', // 기본 테두리 색상
       },
       selectedButton: {
         borderColor: '#479BFF', // 선택 시 테두리 색상
