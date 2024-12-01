@@ -1,12 +1,8 @@
 import React, { useState } from 'react';
 import { StyleSheet, Text, View, TouchableOpacity, TextInput, Image } from 'react-native';
 import { useFonts } from 'expo-font';
-import { RootStackParamList } from '../../types/navigation';
-import { StackScreenProps } from '@react-navigation/stack';
 
-type Props = StackScreenProps<RootStackParamList, 'Start'>;
-
-export default function Signup({ navigation } : Props) {
+export default function Edit() {
   const [fontsLoaded] = useFonts({
     PretendardSemimini_title: require("../../assets/fonts/Pretendard-SemiBold.ttf"),
     PretendardRegular: require("../../assets/fonts/Pretendard-Regular.ttf"),
@@ -99,7 +95,7 @@ export default function Signup({ navigation } : Props) {
         </TouchableOpacity>
       </View>
       <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Select')}>
+        <TouchableOpacity style={styles.button}>
           <Text style={styles.buttonText}>회원가입</Text>
         </TouchableOpacity>
       </View>
