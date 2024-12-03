@@ -5,6 +5,8 @@ import { RootStackParamList } from './types/navigation';
 import Start from './components/start/start';
 import Signup from './components/signup/Signup';
 import Select from './components/select/Select';
+import Login from './components/login/login';
+import Home from './components/home/Home';
 // import Edit from './components/signup/Edit';
 
 const Stack =  createStackNavigator<RootStackParamList>();
@@ -15,10 +17,12 @@ export default function App() {
       <Stack.Navigator initialRouteName="Start"
       screenOptions={{
           headerShown: false,
-        }}>
+        }} >
         <Stack.Screen name="Start" component={Start} />
         <Stack.Screen name="Signup" component={Signup} />
         <Stack.Screen name="Select" component={Select} />
+        <Stack.Screen name="Login" component={Login} />
+        <Stack.Screen name="Home" component={Home} />
         {/* <Stack.Screen name="Select" component={Edit} /> */}
       </Stack.Navigator>
     </NavigationContainer>

@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Image } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Image, Platform} from 'react-native';
 import { useFonts } from 'expo-font';
 import { RootStackParamList } from '../../types/navigation';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -107,7 +107,7 @@ export default function Signup({ navigation }: Props) {
           </TouchableOpacity>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Select')}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.buttonText}>회원가입</Text>
           </TouchableOpacity>
         </View>
@@ -127,7 +127,7 @@ const styles = StyleSheet.create({
   title: {
     width: normalize(375),
     height: normalize(56),
-    marginTop: normalize(110),
+    marginTop: Platform.OS === 'ios' ? normalize(40) : normalize(10),
     flexDirection: 'row', // 가로 방향으로 배치
     alignItems: 'center', // 수직 중앙 정렬
     justifyContent: 'center', // 중앙 정렬
@@ -149,7 +149,7 @@ const styles = StyleSheet.create({
   input: {
     flex: 1,
     color: '#fff',
-    fontSize: 16,
+    fontSize: 14,
     marginLeft: 10,
     fontFamily: "PretendardRegular",
   },
@@ -202,7 +202,7 @@ const styles = StyleSheet.create({
     borderRadius: 10,
     justifyContent: 'center',
     alignContent: 'center',
-    marginTop: 40,
+    marginTop: Platform.OS === 'ios' ? 40: 20,
   },
   buttonText: {
     color: "#fff",
@@ -211,7 +211,8 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   titlebottomcontainer: {
-    marginTop: 49
+    flex:1,
+    top: Platform.OS === 'ios' ? 79 : 20
   },
   back: {
     position: 'absolute', // 화살표를 절대 위치로 설정

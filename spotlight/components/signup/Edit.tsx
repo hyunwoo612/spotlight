@@ -33,13 +33,12 @@ export default function Edit() {
 
   return (
     <View style={styles.container}>
-      <Text style={styles.title}>회원가입</Text>
+      <Text style={styles.title}>회원 정보 수정</Text>
       <Text style={styles.minititle}>이름</Text>
       <View style={styles.inputContainer}>
         <Image source={require('../../assets/User_02.svg')} />
         <TextInput
           style={styles.input}
-          placeholder="이름을 입력해 주세요"
           placeholderTextColor="#aaa"
           maxLength={4}
         />
@@ -49,7 +48,6 @@ export default function Edit() {
         <Image source={require('../../assets/Mail.svg')} />
         <TextInput
           style={styles.input}
-          placeholder="이메일을 입력해 주세요"
           placeholderTextColor="#aaa"
         />
       </View>
@@ -58,7 +56,6 @@ export default function Edit() {
         <Image source={require('../../assets/Lock.svg')} />
         <TextInput
           style={styles.input}
-          placeholder="비밀번호를 입력해 주세요"
           placeholderTextColor="#aaa"
           secureTextEntry
         />
@@ -68,7 +65,6 @@ export default function Edit() {
         <Image source={require('../../assets/Calendar.svg')} />
         <TextInput
           style={styles.input}
-          placeholder="0000-00-00"
           placeholderTextColor="#aaa"
         />
       </View>
@@ -96,7 +92,7 @@ export default function Edit() {
       </View>
       <View style={styles.buttonContainer}>
         <TouchableOpacity style={styles.button}>
-          <Text style={styles.buttonText}>회원가입</Text>
+          <Text style={styles.buttonText}>수정 완료</Text>
         </TouchableOpacity>
       </View>
     </View>

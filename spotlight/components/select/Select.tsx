@@ -1,4 +1,4 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput } from 'react-native';
+import { StyleSheet, Text, View, Image, TouchableOpacity, TextInput, Platform } from 'react-native';
 import { useFonts } from 'expo-font';
 import { useNavigation } from '@react-navigation/native';
 import { StackScreenProps } from '@react-navigation/stack';
@@ -60,7 +60,7 @@ export default function Select({ navigation } : Props) {
         ))}
       </View>
     <View style={styles.buttonContainer}>
-        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Select')}>
+        <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Home')}>
         <Text style={styles.buttonText}>다음</Text>
       </TouchableOpacity>
     </View>
@@ -76,8 +76,9 @@ const styles = StyleSheet.create({
         padding: 20,
       },
       titleContainer: {
-        marginTop: normalize(80),
-        marginBottom: normalize(28),
+        marginTop: Platform.OS === 'ios' ? normalize(80): normalize(120),
+        marginBottom: Platform.OS === 'ios' ? normalize(28): 60,
+        bottom: Platform.OS === 'ios' ? 0 : normalize(60)
       },
       title: {
         color: '#FFFFFF',
@@ -94,7 +95,8 @@ const styles = StyleSheet.create({
       },
       buttonContainer: {
         flex: 1,
-        marginBottom: 120,
+        marginBottom: Platform.OS === 'ios' ? 120: 0,
+        bottom: Platform.OS === 'ios' ? 0 : 80,
         alignItems: 'center',
       },
       button: {
@@ -115,7 +117,8 @@ const styles = StyleSheet.create({
         flexDirection: 'row',
         flexWrap: 'wrap',
         justifyContent: 'space-between',
-        marginBottom: normalize(30),
+        marginBottom: Platform.OS === 'ios' ? normalize(30) : 0,
+        bottom: Platform.OS === 'ios' ? 0 : normalize(80)
       },
       button1: {
         width: '48%', // 두 버튼이 한 줄에 배치되도록 설정

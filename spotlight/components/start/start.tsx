@@ -1,7 +1,8 @@
-import { StyleSheet, Text, View, Image, TouchableOpacity, Alert } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, Platform} from 'react-native';
 import { useFonts } from 'expo-font';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
+import Basketball from '../../assets/Basketball.svg'
 
 type Props = StackScreenProps<RootStackParamList, 'Start'>;
 
@@ -13,19 +14,18 @@ export default function Start({ navigation } : Props) {
 
   if (!fontsLoaded) return null;
 
-  const basketball = require("../../assets/Basketball.png")
 
   return (
     <View style={styles.container}>
         <View style={styles.basketball}>
-          <Image source={basketball} width={200} height={200} />
+          <Basketball width={200} height={200} />
         </View>
         <View style={styles.textContainer}>
           <Text style={styles.bold}>스포트 라이트</Text>
           <Text style={styles.light}>스포츠 일자리를{"\n"}쉽게 찾도록 도와주는 빛.</Text>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Signup')}>
+          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
             <Text style={styles.buttonText}>시작하기</Text>
           </TouchableOpacity>
         </View>
@@ -42,8 +42,8 @@ const styles = StyleSheet.create({
   },
   basketball: {
     flex: 1,
-    marginTop: 200,
-    marginBottom: 100,
+    marginTop: Platform.OS === 'ios' ? 200 : 150,
+    marginBottom: Platform.OS === 'ios' ? 100 : 150,
   },
   bold: {
     fontSize: 32,
@@ -68,7 +68,7 @@ const styles = StyleSheet.create({
   },
   buttonContainer: {
     flex: 1,
-    marginBottom: 120,
+    marginBottom: Platform.OS === 'ios' ? 120 : 80,
   },
   button: {
     backgroundColor: '#479BFF',
