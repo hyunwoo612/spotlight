@@ -2,11 +2,12 @@ import { StyleSheet, Text, View, TouchableOpacity, Platform} from 'react-native'
 import { useFonts } from 'expo-font';
 import { StackScreenProps } from '@react-navigation/stack';
 import { RootStackParamList } from '../../types/navigation';
-import Basketball from '../../assets/Basketball.svg'
+import Basketball from '../../assets/Basketball.svg';
 
 type Props = StackScreenProps<RootStackParamList, 'Start'>;
 
 export default function Start({ navigation } : Props) {
+
   const [fontsLoaded] = useFonts({
     PretendardSemiBold: require("../../assets/fonts/otf/Pretendard-SemiBold.otf"),
     PretendardRegular: require("../../assets/fonts/otf/Pretendard-Regular.otf")

@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
-import { StyleSheet, Text, View, TouchableOpacity, TextInput, Image, Platform } from 'react-native';
+import { StyleSheet, Text, View, TouchableOpacity, TextInput, Image, Platform, Alert } from 'react-native';
 import { useFonts } from 'expo-font';
 import { RootStackParamList } from '../../types/navigation';
 import { StackScreenProps } from '@react-navigation/stack';
-import { normalize } from '../../normallize'; // normalize 함수 import
-import Badminton from '../../assets/Badminton.svg'
+import { normalize } from '../../normallize';
+import { useAuth } from '../../context/AuthContext';
+import axios from 'axios';
 
 type Props = StackScreenProps<RootStackParamList, 'Login'>;
 
@@ -14,7 +15,30 @@ export default function Login({ navigation }: Props) {
     PretendardRegular: require("../../assets/fonts/otf/Pretendard-Regular.otf"),
   });
 
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+
   if (!fontsLoaded) return null;
+
+  const { setToken } = useAuth(); // 토큰 저장 함수 가져오기
+
+  const handleLogin = async () => {
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/login', { email, password });
+      const { token } = response.data;
+
+      if (token) {
+        setToken(token); // AuthContext에 토큰 저장
+        Alert.alert('로그인 성공', '홈 화면으로 이동합니다.');
+        navigation.navigate('Select');
+      } else {
+        Alert.alert('로그인 실패', '토큰을 받을 수 없습니다.');
+      }
+    } catch (error) {
+      Alert.alert('오류', '로그인에 실패했습니다. 이메일 또는 비밀번호를 확인하세요.');
+    }
+  };
+
 
   return (
     <View style={styles.container}>
@@ -25,7 +49,7 @@ export default function Login({ navigation }: Props) {
         <Text style={styles.titletext}>로그인</Text>
       </View>
       <View style={styles.badminton}>
-        <Image source={require('../../assets/Badminton.png')}/>
+        <Image source={require('../../assets/Badminton.png')} />
       </View>
       <View style={styles.titlebottomcontainer}>
         <Text style={styles.minititle}>이메일</Text>
@@ -35,6 +59,8 @@ export default function Login({ navigation }: Props) {
             style={styles.input}
             placeholder="이메일"
             placeholderTextColor="#aaa"
+            value={email}
+            onChangeText={setEmail}
           />
         </View>
         <Text style={styles.minititle}>비밀번호</Text>
@@ -45,16 +71,20 @@ export default function Login({ navigation }: Props) {
             placeholder="비밀번호"
             placeholderTextColor="#aaa"
             secureTextEntry
+            value={password}
+            onChangeText={setPassword}
           />
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Select')}>
+          <TouchableOpacity style={styles.button} onPress={handleLogin}>
             <Text style={styles.buttonText}>로그인</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.signup}>
           <Text style={styles.notuser}>아직 회원이 아니신가요?</Text>
-          <TouchableOpacity onPress={() => navigation.navigate('Signup')}><Text style={styles.signupbutton}>회원가입</Text></TouchableOpacity>
+          <TouchableOpacity onPress={() => navigation.navigate('Signup')}>
+            <Text style={styles.signupbutton}>회원가입</Text>
+          </TouchableOpacity>
         </View>
       </View>
     </View>
@@ -78,13 +108,13 @@ const styles = StyleSheet.create({
     width: normalize(375),
     height: normalize(56),
     marginTop: Platform.OS === 'ios' ? normalize(40) : normalize(10),
-    flexDirection: 'row', // 가로 방향으로 배치
-    alignItems: 'center', // 수직 중앙 정렬
-    justifyContent: 'center', // 중앙 정렬
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
   },
   titletext: {
     color: "#FFF",
-    fontSize: 20,// 화살표와 텍스트 사이의 간격
+    fontSize: 20,
   },
   inputContainer: {
     flexDirection: 'row',
@@ -120,7 +150,6 @@ const styles = StyleSheet.create({
     height: normalize(60),
     borderRadius: 10,
     justifyContent: 'center',
-    alignContent: 'center',
     marginTop: 40,
   },
   buttonText: {
@@ -130,12 +159,12 @@ const styles = StyleSheet.create({
     fontSize: 14,
   },
   titlebottomcontainer: {
-    flex:1,
+    flex: 1,
     top: Platform.OS === 'ios' ? normalize(64): normalize(60)
   },
   back: {
-    position: 'absolute', // 화살표를 절대 위치로 설정
-    left: 30, // 왼쪽 여백
+    position: 'absolute',
+    left: 30,
   },
   notuser: {
     color: '#9EA3B2',
@@ -143,7 +172,7 @@ const styles = StyleSheet.create({
   },
   signup: {
     flex: 1,
-    flexDirection:'row',
+    flexDirection: 'row',
     justifyContent: 'center',
     top: Platform.OS === 'ios' ? -10 : 10
   },

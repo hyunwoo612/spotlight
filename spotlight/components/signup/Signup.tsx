@@ -4,7 +4,9 @@ import { useFonts } from 'expo-font';
 import { RootStackParamList } from '../../types/navigation';
 import { StackScreenProps } from '@react-navigation/stack';
 import { normalize } from '../../normallize'; // normalize 함수 import
-import { useNavigation } from '@react-navigation/native';
+import axios, { AxiosError } from 'axios';
+
+
 
 type Props = StackScreenProps<RootStackParamList, 'Signup'>;
 
@@ -16,6 +18,12 @@ export default function Signup({ navigation }: Props) {
 
   const [checkBox1, setCheckBox1] = useState(false);
   const [checkBox2, setCheckBox2] = useState(false);
+
+  const [name, setName] = useState('');
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [birthDate, setBirthDate] = useState('');
+
 
   if (!fontsLoaded) return null;
 
@@ -37,6 +45,33 @@ export default function Signup({ navigation }: Props) {
     }
   };
 
+  const handleSignup = async () => {
+    const user = {
+      name: name,
+      email: email,
+      password: password,
+      birth_date: birthDate,
+      user_type: checkBox1 ? '장애인' : '비장애인',
+    };
+
+    try {
+      const response = await axios.post('http://127.0.0.1:5000/signup', user);
+      if (response.status === 201) {
+        alert('회원가입이 완료되었습니다!');
+        navigation.navigate('Login');
+      }
+    } catch (error) {
+      // AxiosError로 타입 지정
+      if (error instanceof AxiosError && error.response) {
+        // error.response가 존재할 경우, 서버에서 보낸 error 메시지를 출력
+        alert(error.response.data.error);
+      } else {
+        alert('서버에 연결할 수 없습니다.');
+      }
+    }
+  };
+
+
   return (
     <View style={styles.container}>
       <View style={styles.title}>
@@ -54,6 +89,8 @@ export default function Signup({ navigation }: Props) {
             placeholder="이름을 입력해 주세요"
             placeholderTextColor="#aaa"
             maxLength={4}
+            value={name} // 상태 값 사용
+            onChangeText={(text) => setName(text)} // 상태 업데이트
           />
         </View>
         <Text style={styles.minititle}>이메일</Text>
@@ -63,6 +100,8 @@ export default function Signup({ navigation }: Props) {
             style={styles.input}
             placeholder="이메일을 입력해 주세요"
             placeholderTextColor="#aaa"
+            value={email} // 상태 값 사용
+            onChangeText={(text) => setEmail(text)}
           />
         </View>
         <Text style={styles.minititle}>비밀번호</Text>
@@ -73,6 +112,8 @@ export default function Signup({ navigation }: Props) {
             placeholder="비밀번호를 입력해 주세요"
             placeholderTextColor="#aaa"
             secureTextEntry
+            value={password} // 상태 값 사용
+            onChangeText={(text) => setPassword(text)}
           />
         </View>
         <Text style={styles.minititle}>생년월일</Text>
@@ -82,6 +123,8 @@ export default function Signup({ navigation }: Props) {
             style={styles.input}
             placeholder="0000-00-00"
             placeholderTextColor="#aaa"
+            value={birthDate} // 상태 값 사용
+            onChangeText={(text) => setBirthDate(text)}
           />
         </View>
         <View style={styles.toggleContainer}>
@@ -93,7 +136,7 @@ export default function Signup({ navigation }: Props) {
             onPress={handleCheckBox1}
           >
             <Image style={styles.togglecheck} source={checkBox1 ? require('../../assets/CheckActive.png') : require('../../assets/Check.png')}/>
-            <Text style={[styles.toggleText, checkBox1 && styles.activeText]}>사업자</Text>
+            <Text style={[styles.toggleText, checkBox1 && styles.activeText]}>장애인</Text>
           </TouchableOpacity>
           <TouchableOpacity
             style={[
@@ -103,11 +146,11 @@ export default function Signup({ navigation }: Props) {
             onPress={handleCheckBox2}
           >
             <Image style={styles.togglecheck} source={checkBox2 ? require('../../assets/CheckActive.png') : require('../../assets/Check.png')}/>
-            <Text style={[styles.toggleText, checkBox2 && styles.activeText]}>개인 사용자</Text>
+            <Text style={[styles.toggleText, checkBox2 && styles.activeText]}>비장애인</Text>
           </TouchableOpacity>
         </View>
         <View style={styles.buttonContainer}>
-          <TouchableOpacity style={styles.button} onPress={() => navigation.navigate('Login')}>
+          <TouchableOpacity style={styles.button} onPress={handleSignup}>
             <Text style={styles.buttonText}>회원가입</Text>
           </TouchableOpacity>
         </View>

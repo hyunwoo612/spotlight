@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useState } from 'react';
 import { useFonts } from 'expo-font';
 import { NavigationIndependentTree } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -14,12 +14,15 @@ import ActiveSearch from '../../assets/Search_01.svg';
 import UnderArrow from '../../assets/Chevron_Down.svg';
 import Navi from '../../assets/Navigation.svg';
 import InactiveJim from '../../assets/JimInactive.svg';
+import ActiveJim from '../../assets/Jimactive.svg';
 import { normalize } from '../../normallize';
 import SearchIcon from '../../assets/Search.svg';
 
 const Tab = createBottomTabNavigator();
 
 function HomeScreen() {
+  // 각 버튼의 상태를 배열로 관리
+  const [jimStates, setJimStates] = useState([false, false, false, false, false]);
 
   const [fontsLoaded] = useFonts({
     PretendardBold: require("../../assets/fonts/otf/Pretendard-Bold.otf"),
@@ -27,26 +30,63 @@ function HomeScreen() {
     PretendardRegular: require("../../assets/fonts/otf/Pretendard-Regular.otf"),
   });
 
-  if (!fontsLoaded) return null;
+  if (!fontsLoaded) {
+    return (
+      <View style={styles.screen}>
+        <Text style={styles.text}>Loading...</Text>
+      </View>
+    );
+  }
+
+  // 렌더링할 데이터
+  const locations = [
+    "시화그랜드볼링센타",
+    "다모아탁구교실",
+    "메디요가",
+    "비벨르",
+    "한숲스포츠센터",
+  ];
+
+  // 버튼 상태 토글 함수
+  const toggleJim = (index: number) => {
+    setJimStates((prevStates) =>
+      prevStates.map((state, i) => (i === index ? !state : state))
+    );
+  };
 
   return (
     <View style={styles.home}>
       <Text style={styles.title}>추천 정보</Text>
-        <View style={styles.selectbox}>
-        <View style={styles.info}><Text style={styles.infotext}>가까운 순</Text><UnderArrow style={styles.arrow} /></View>
-        <View style={styles.address}><Navi style={styles.addressarrow}/><Text style={styles.addresstext}>화천리</Text></View>
+      <View style={styles.selectbox}>
+        <View style={styles.info}>
+          <Text style={styles.infotext}>가까운 순</Text>
+          <UnderArrow style={styles.arrow} />
         </View>
+        <View style={styles.address}>
+          <Navi style={styles.addressarrow} />
+          <Text style={styles.addresstext}>화천리</Text>
+        </View>
+      </View>
       <View style={styles.onecontainer}>
-        <View style={styles.one}>
-          <View style={styles.onebox}>
-            <Text style={styles.onetext}>더스윙블랙경기광주태전점</Text>
-            <InactiveJim style={styles.Jim} width={20} height={20}/>
+        {locations.map((location, index) => (
+          <View style={styles.one} key={index}>
+            <View style={styles.onebox}>
+              <Text style={styles.onetext}>{location}</Text>
+              <TouchableOpacity onPress={() => toggleJim(index)}>
+                {jimStates[index] ? (
+                  <ActiveJim style={styles.jim} />
+                ) : (
+                  <InactiveJim style={styles.jim} />
+                )}
+              </TouchableOpacity>
+            </View>
           </View>
-        </View>
+        ))}
       </View>
     </View>
   );
 }
+
 
 function FavoritesScreen() {
   return (
@@ -124,23 +164,23 @@ export default function Home() {
           }}
         />
         <Tab.Screen
-          name="Profile"
-          component={ProfileScreen}
-          options={{
-            tabBarIcon: ({ focused }) => (
-              <View style={styles.iconContainer}>
-                {focused ? <ActiveUser /> : <InactiveUser />}
-              </View>
-            ),
-          }}
-        />
-        <Tab.Screen
           name="Search"
           component={SearchScreen}
           options={{
             tabBarIcon: ({ focused }) => (
               <View style={styles.iconContainer}>
                 {focused ? <ActiveSearch /> : <InactiveSearch />}
+              </View>
+            ),
+          }}
+        />
+        <Tab.Screen
+          name="Profile"
+          component={ProfileScreen}
+          options={{
+            tabBarIcon: ({ focused }) => (
+              <View style={styles.iconContainer}>
+                {focused ? <ActiveUser /> : <InactiveUser />}
               </View>
             ),
           }}
@@ -241,12 +281,14 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   jim: {
-
+    top: 17,
+    left: 40,
   },
   onecontainer: {
     flex:1,
     alignItems: 'center',
-    top: 120
+    top: 120,
+    gap: 50
   },
   onebox: {
     flexDirection: 'row',
