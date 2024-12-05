@@ -55,7 +55,7 @@ export default function Signup({ navigation }: Props) {
     };
 
     try {
-      const response = await axios.post('http://127.0.0.1:5000/signup', user);
+      const response = await axios.post('https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/signup', user);
       if (response.status === 201) {
         alert('회원가입이 완료되었습니다!');
         navigation.navigate('Login');

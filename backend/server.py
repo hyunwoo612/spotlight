@@ -113,10 +113,24 @@ def login():
         'exp': dt.datetime.utcnow() + dt.timedelta(hours=1)  # 1시간 후 만료
     }, app.config['SECRET_KEY'], algorithm='HS256')
 
+    # 선택 항목 확인
+    selections = userselection.query.filter_by(user_id=user.id).all()
+
+    if selections:
+        # 선택 항목이 이미 존재하면 홈페이지로 이동
+        return jsonify({
+            'message': '로그인 성공 - 홈페이지로 이동',
+            'token': token,  # JWT 토큰을 응답에 포함
+            'redirect': 'homepage'  # 리다이렉트 경로 명시
+        }), 200
+
+    # 선택 항목이 없으면 일반 로그인 응답
     return jsonify({
-        'message': '로그인 성공',
-        'token': token  # JWT 토큰을 응답에 포함
+        'message': '로그인 성공 - 선택 항목 페이지로 이동',
+        'token': token,  # JWT 토큰을 응답에 포함
+        'redirect': 'selectionPage'  # 리다이렉트 경로 명시
     }), 200
+
 
 @app.route('/saveSelections', methods=['POST'])
 def save_selections():

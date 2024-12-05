@@ -30,9 +30,7 @@ export default function Select({ navigation }: Props) {
     '배드민턴', '요가/필라테스', '스피닝', '서킷트레이닝',
     '라켓볼', '빙상', '무도프로그램', '기타체육프로그램',
   ];
-
-  console.log(token);
-
+  
   // 선택된 항목 인덱스를 추출하여 해당 항목들만 담은 배열로 반환
   const selectedItems = buttonLabels.filter((label, index) => selectedButtons[index]);
 
@@ -51,7 +49,7 @@ export default function Select({ navigation }: Props) {
     const selectionsString = selectedItems.join(',');
   
     try {
-      const response = await axios.post('http://127.0.0.1:5000/saveSelections', {
+      const response = await axios.post('https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/saveSelections', {
         token, // JWT 토큰 전송
         selectedItems: selectionsString, // 콤마로 구분된 문자열 전송
       });

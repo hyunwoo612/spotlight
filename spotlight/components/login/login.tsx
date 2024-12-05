@@ -24,13 +24,13 @@ export default function Login({ navigation }: Props) {
 
   const handleLogin = async () => {
     try {
-      const response = await axios.post('http://127.0.0.1:5000/login', { email, password });
-      const { token } = response.data;
-
+      const response = await axios.post('https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/login', { email, password });
+      const { token, redirect } = response.data;
+  
       if (token) {
-        setToken(token); // AuthContext에 토큰 저장
-        Alert.alert('로그인 성공', '홈 화면으로 이동합니다.');
-        navigation.navigate('Select');
+        setToken(token);
+        Alert.alert('로그인 성공');
+        navigation.navigate(redirect === 'homepage' ? 'Home' : 'Select');
       } else {
         Alert.alert('로그인 실패', '토큰을 받을 수 없습니다.');
       }
