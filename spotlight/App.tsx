@@ -8,6 +8,7 @@ import Signup from './components/signup/Signup';
 import Select from './components/select/Select';
 import Login from './components/login/login';
 import Home from './components/home/Home';
+import Test from './components/test/Test';
 // import Edit from './components/signup/Edit';
 
 const Stack =  createStackNavigator<RootStackParamList>();
@@ -25,6 +26,7 @@ export default function App() {
           <Stack.Screen name="Select" component={Select} />
           <Stack.Screen name="Login" component={Login} />
           <Stack.Screen name="Home" component={Home} />
+          <Stack.Screen name="Test" component={Test} />
           {/* <Stack.Screen name="Select" component={Edit} /> */}
         </Stack.Navigator>
       </NavigationContainer>
