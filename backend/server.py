@@ -17,6 +17,26 @@ model = DecisionTreeClassifier(random_state=42)
 
 load_dotenv('.env')
 
+SQLURL = os.environ.get('SQLURL')
+SECRET_KEY = os.environ.get('SECRET_KEY')
+
+print("SQLURL:", SQLURL) 
+
+app = Flask(__name__)
+
+# CORS 설정
+CORS(app)
+
+# MySQL 데이터베이스 설정
+# JWT 비밀 키 설정
+app.config['SECRET_KEY'] = SECRET_KEY  # 변경할 비밀 키
+
+app.config['SQLALCHEMY_DATABASE_URI'] = SQLURL
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+
+db = SQLAlchemy(app)
+
+
 KS = pd.read_csv('KS_DSPSN_SVCH_UTILIIZA_CRSTAT_INFO_202410.csv')
 KS2 = pd.read_csv('KS_SVCH_UTILIIZA_CRSTAT_INFO_202410.csv')
 
@@ -40,21 +60,7 @@ CTPRVN_NM = LabelEncoder()
 X = KS_sum[['ITEM_NM','TROBL_TY_NM','CTPRVN_NM']]
 y = KS_sum[['COURSE_NO']]
 
-app = Flask(__name__)
 
-# CORS 설정
-CORS(app)
-
-SQLURL = os.environ.get('SQLURL')
-SECRET_KEY = os.environ.get('SECRET_KEY')
-
-# MySQL 데이터베이스 설정
-app.config['SQLALCHEMY_DATABASE_URI'] = SQLURL
-app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
-db = SQLAlchemy(app)
-
-# JWT 비밀 키 설정
-app.config['SECRET_KEY'] = SECRET_KEY  # 변경할 비밀 키
 
 # 사용자 모델 정의
 class User(db.Model):
