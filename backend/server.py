@@ -12,6 +12,7 @@ import pandas as pd
 from sklearn.tree import DecisionTreeClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.preprocessing import LabelEncoder
+import random
 
 model = DecisionTreeClassifier(random_state=42)
 
@@ -37,30 +38,51 @@ app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 db = SQLAlchemy(app)
 
 
-KS = pd.read_csv('KS_DSPSN_SVCH_UTILIIZA_CRSTAT_INFO_202410.csv')
-KS2 = pd.read_csv('KS_SVCH_UTILIIZA_CRSTAT_INFO_202410.csv')
+# 데이터 로드
+KS_sum = pd.read_csv('KS_sum.csv')
 
-KS = KS[['FCLTY_NM', 'ITEM_NM','TROBL_TY_NM','COURSE_PRC','COURSE_NM','COURSE_NO','CTPRVN_NM','SIGNGU_NM']]
-
-KS.fillna("0", inplace=True)
-
-KS['TROBL_TY_NM'] = KS['TROBL_TY_NM'].apply(lambda x: 0 if x == '0' else 1)
-
-KS2 = KS2[['FCLTY_NM', 'ITEM_NM','COURSE_PRC','COURSE_NM','COURSE_NO','CTPRVN_NM','SIGNGU_NM']]
-
-KS2['TROBL_TY_NM'] = 0
-
-KS_sum = pd.concat([KS,KS2])
-
-KS_sum.drop_duplicates(subset="COURSE_NO",keep='first',inplace=True)
+# 레이블 인코더 설정
 item_nm = LabelEncoder()
 trobl_ty = LabelEncoder()
 CTPRVN_NM = LabelEncoder()
 
-X = KS_sum[['ITEM_NM','TROBL_TY_NM','CTPRVN_NM']]
-y = KS_sum[['COURSE_NO']]
+# 레이블 인코딩
+KS_sum['ITEM_NM'] = item_nm.fit_transform(KS_sum['ITEM_NM'])
+KS_sum['TROBL_TY_NM'] = trobl_ty.fit_transform(KS_sum['TROBL_TY_NM'])
+KS_sum['CTPRVN_NM'] = CTPRVN_NM.fit_transform(KS_sum['CTPRVN_NM'])
 
+# 항목 리스트
+항목들 = ['헬스', '탁구', '수영']  # 원하는 항목 추가 가능
 
+# 결과 저장 리스트
+결과 = []
+
+# 조건에 따라 무작위 추천
+for 항목 in 항목들:
+    try:
+        # 조건에 맞는 데이터 필터링
+        필터링된_데이터 = KS_sum[
+            (KS_sum['ITEM_NM'] == item_nm.transform([항목])[0]) & 
+            (KS_sum['TROBL_TY_NM'] == 1) &  # TROBL_TY_NM == 1 조건
+            (KS_sum['CTPRVN_NM'] == CTPRVN_NM.transform(['서울'])[0])  # 서울 조건
+        ]
+
+        # 데이터를 섞어서 무작위 추천
+        섞인_데이터 = 필터링된_데이터.sample(frac=1, random_state=random.randint(0, 1000))  # 데이터 섞기
+        추천_데이터 = 섞인_데이터.head(3)  # 상위 3개를 추천 (조정 가능)
+
+        # 결과 저장
+        결과.append({
+            '항목': 항목,
+            '추천 데이터': 추천_데이터[['FCLTY_NM', 'COURSE_NM', 'CTPRVN_NM', 'SIGNGU_NM']].to_dict(orient='records')
+        })
+
+    except Exception as e:
+        print(f"항목 {항목} 처리 중 오류 발생: {e}")
+
+# 결과 저장 및 출력
+
+결과_df = pd.DataFrame(결과)
 
 # 사용자 모델 정의
 class User(db.Model):
@@ -173,10 +195,10 @@ def process_user_selection():
         # JSON 데이터 파싱
         data = request.json
         token = data.get('token')  # 사용자 인증을 위한 JWT 토큰
-
+        
         if not token:
             return jsonify({'error': '토큰이 필요합니다.'}), 400
-
+        
         # JWT 검증 및 사용자 ID 추출
         try:
             payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
@@ -186,44 +208,56 @@ def process_user_selection():
         except jwt.InvalidTokenError:
             return jsonify({'error': '유효하지 않은 토큰입니다.'}), 401
 
-        # `userselection` 테이블에서 선택 항목 조회
+        # 사용자 선택 항목 조회
         selections = userselection.query.filter_by(user_id=user_id).all()
+        selection_items = [selection.selected_item for selection in selections]
 
-        if not selections:
-            return jsonify({'error': '선택 항목이 없습니다.'}), 404
+        # 선택 항목이 없을 경우
+        if not selection_items:
+            return jsonify({'message': '선택 항목이 없습니다.', 'selections': []}), 200
 
-        # `selected_item`에서 스포츠 항목만 추출
-        # (콤마로 구분된 문자열이라 가정하고 분리)
-        sports_items = []
-        for selection in selections:
-            sports_items.extend(selection.selected_item.split(','))  # 항목 분리
+        # 추천 데이터 생성
+        추천_결과 = []
+        for 항목 in selection_items:
+            try:
+                # 항목 분리
+                분리된_항목 = 항목.split(',')
+                추천_데이터 = []
 
-        # 중복 제거 및 최소 3개 검증
-        sports_items = list(set(sports_items))  # 중복 제거
-        if len(sports_items) < 3:
-            return jsonify({'error': '스포츠 항목이 최소 3개 이상이어야 합니다.'}), 400
+                for 단일_항목 in 분리된_항목:
+                    if 단일_항목 not in item_nm.classes_:
+                        print(f"항목 '{단일_항목}'은 학습된 라벨에 없습니다.")
+                        continue
 
-        # LabelEncoder를 사용해 숫자로 변환
-        try:
-            스포츠 = item_nm.transform(sports_items)  # 스포츠 항목 변환
-        except ValueError as e:
-            return jsonify({'error': f'스포츠 변환 오류: {str(e)}'}), 400
+                    # 조건에 맞는 데이터 필터링
+                    필터링된_데이터 = KS_sum[
+                        (KS_sum['ITEM_NM'] == item_nm.transform([단일_항목])[0]) &
+                        (KS_sum['TROBL_TY_NM'] == 1) &  # TROBL_TY_NM == 1 조건
+                        (KS_sum['CTPRVN_NM'] == CTPRVN_NM.transform(['서울'])[0])  # 서울 조건
+                    ]
 
-        # 모델 입력 데이터 구성
-        input_data = {
-            '스포츠': 스포츠.tolist(),  # LabelEncoder 변환 결과를 리스트로 반환
-            'user_id': user_id
-        }
+                    # 데이터를 섞어서 무작위 추천
+                    섞인_데이터 = 필터링된_데이터.sample(frac=1, random_state=random.randint(0, 1000))
+                    추천_데이터.extend(섞인_데이터.head(3).to_dict(orient='records'))  # 상위 3개를 추천
 
-        # 결과 반환
+                # 추천 데이터가 있을 경우 저장
+                if 추천_데이터:
+                    추천_결과.append({
+                        '항목': 항목,
+                        '추천 데이터': 추천_데이터
+                    })
+
+            except Exception as e:
+                print(f"항목 {항목} 처리 중 오류 발생: {e}")
+
+        # 추천 결과 응답
         return jsonify({
-            'message': '선택 항목이 성공적으로 처리되었습니다.',
-            'input_data': input_data
+            'message': '추천 결과 생성 완료',
+            'recommendations': 추천_결과
         }), 200
 
     except Exception as e:
         return jsonify({'error': f'서버 오류: {str(e)}'}), 500
-
 
 if __name__ == '__main__':
     app.run(debug=True)

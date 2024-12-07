@@ -19,16 +19,35 @@ import { normalize } from '../../normallize';
 import SearchIcon from '../../assets/Search.svg';
 import * as Location from "expo-location";
 import axios from "axios";
+import { useAuth } from '../../context/AuthContext';
 
 const Tab = createBottomTabNavigator();
 
 const KAKAO_REST_API_KEY = "b2f1d72ae0832594f5212637f336234c";
 
+type FacilityItem = {
+  FCLTY_NM: string;
+  COURSE_NM: string;
+  COURSE_NO: number;
+  COURSE_PRC: number;
+  CTPRVN_NM: string;
+  ITEM_NM: string;
+  SIGNGU_NM: string;
+  TROBL_TY_NM: string;
+};
+
 function HomeScreen() {
   // 각 버튼의 상태를 배열로 관리
   const [jimStates, setJimStates] = useState([false, false, false, false, false]);
 
+  const [apiResponse, setApiResponse] = useState(null); // API 응답 상태
+  const [error, setError] = useState<string | null>(null);
+
   const [addressText, setAddressText] = useState("위치 X");
+
+  const [locations, setLocations] = useState<string[]>([]); 
+
+  const { token } = useAuth();
 
   useEffect(() => {
     const fetchLocation = async () => {
@@ -65,6 +84,41 @@ function HomeScreen() {
     fetchLocation();
   }, []);
 
+  const fetchUserSelection = async () => {
+    try {
+      const response = await axios.post(
+        'http://127.0.0.1:5000/process_user_selection',
+        { token: token },
+        {
+          headers: {
+            'Content-Type': 'application/json',
+          },
+        }
+      );
+      setApiResponse(response.data); 
+      // Map the FCLTY_NM values from the API response to locations
+      if (response.data && response.data.recommendations) {
+        const facilityNames = response.data.recommendations[0]["추천 데이터"].map(
+          (item: FacilityItem) => item.FCLTY_NM
+        );
+        setLocations(facilityNames);
+      }
+    } catch (err: unknown) {
+      const error = err as Error;
+      setError(error.message); 
+    }
+  };
+  
+
+  // 컴포넌트가 마운트될 때 API 호출
+  useEffect(() => {
+    if (token) { // token이 존재할 경우에만 API 호출
+      fetchUserSelection();
+    } else {
+      setError("토큰이 유효하지 않습니다."); // 에러 메시지 설정
+    }
+  }, [token]);
+
   const [fontsLoaded] = useFonts({
     PretendardBold: require("../../assets/fonts/otf/Pretendard-Bold.otf"),
     PretendardSemiBold: require("../../assets/fonts/otf/Pretendard-SemiBold.otf"),
@@ -78,15 +132,6 @@ function HomeScreen() {
       </View>
     );
   }
-
-  // 렌더링할 데이터
-  const locations = [
-    "시화그랜드볼링센타",
-    "다모아탁구교실",
-    "메디요가",
-    "비벨르",
-    "한숲스포츠센터",
-  ];
 
   // 버튼 상태 토글 함수
   const toggleJim = (index: number) => {
@@ -107,12 +152,12 @@ function HomeScreen() {
           <Navi style={styles.addressarrow} />
           <Text style={styles.addresstext}>{addressText}</Text>
         </View>
-      </View>
-      <View style={styles.onecontainer}>
+      </View><View style={styles.onecontainer}>
         {locations.map((location, index) => (
           <View style={styles.one} key={index}>
             <View style={styles.onebox}>
               <Text style={styles.onetext}>{location}</Text>
+              <Text>테스트입니다.</Text>
               <TouchableOpacity onPress={() => toggleJim(index)}>
                 {jimStates[index] ? (
                   <ActiveJim style={styles.jim} />
@@ -322,7 +367,7 @@ const styles = StyleSheet.create({
     borderTopWidth: 0,
   },
   jim: {
-    top: 17,
+    top: Platform.OS === 'ios' ? 15 : 17,
     left: 40,
   },
   onecontainer: {
