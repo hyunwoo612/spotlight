@@ -36,6 +36,11 @@ type FacilityItem = {
   TROBL_TY_NM: string;
 };
 
+type LocationItem = {
+  facilityName: string;
+  courseName: string;
+};
+
 function HomeScreen() {
   // 각 버튼의 상태를 배열로 관리
   const [jimStates, setJimStates] = useState([false, false, false, false, false]);
@@ -45,7 +50,7 @@ function HomeScreen() {
 
   const [addressText, setAddressText] = useState("위치 X");
 
-  const [locations, setLocations] = useState<string[]>([]); 
+  const [locations, setLocations] = useState<LocationItem[]>([]);
 
   const { token } = useAuth();
 
@@ -58,20 +63,28 @@ function HomeScreen() {
           setAddressText("위치 권한이 거부되었습니다.");
           return;
         }
-
+    
         // 현재 위치 가져오기
         const location = await Location.getCurrentPositionAsync({});
         const { latitude, longitude } = location.coords;
-
+    
         // 카카오 지도 API 호출
         const response = await axios.get("https://dapi.kakao.com/v2/local/geo/coord2address.json", {
           headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
           params: { x: longitude, y: latitude },
         });
-
+    
         if (response.data && response.data.documents.length > 0) {
           const address = response.data.documents[0].address;
           setAddressText(address.region_1depth_name); // 시(city) 정보 추출
+    
+          // 서버에 위치 정보 전송
+          const userToken = token;  // 실제 사용자의 JWT 토큰을 가져와야 합니다
+          await axios.post('https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/process_user_selection', {
+            token: userToken,
+            region: address.region_1depth_name  // 현재 위치를 서버에 전달
+          });
+    
         } else {
           setAddressText("주소 정보를 가져올 수 없습니다.");
         }
@@ -80,14 +93,15 @@ function HomeScreen() {
         setAddressText("위치 정보를 가져오는 중 오류 발생");
       }
     };
-
+    
     fetchLocation();
+    
   }, []);
 
   const fetchUserSelection = async () => {
     try {
       const response = await axios.post(
-        'http://127.0.0.1:5000/process_user_selection',
+        'https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/process_user_selection',
         { token: token },
         {
           headers: {
@@ -96,19 +110,22 @@ function HomeScreen() {
         }
       );
       setApiResponse(response.data); 
-      // Map the FCLTY_NM values from the API response to locations
+      // Map the FCLTY_NM and COURSE_NM values from the API response to locations
       if (response.data && response.data.recommendations) {
-        const facilityNames = response.data.recommendations[0]["추천 데이터"].map(
-          (item: FacilityItem) => item.FCLTY_NM
+        const facilityData = response.data.recommendations[0]["추천 데이터"].map(
+          (item: FacilityItem) => ({
+            facilityName: item.FCLTY_NM,
+            courseName: item.COURSE_NM
+          })
         );
-        setLocations(facilityNames);
+        setLocations(facilityData); // Store both facilityName and courseName
       }
     } catch (err: unknown) {
       const error = err as Error;
       setError(error.message); 
     }
   };
-  
+
 
   // 컴포넌트가 마운트될 때 API 호출
   useEffect(() => {
@@ -156,8 +173,10 @@ function HomeScreen() {
         {locations.map((location, index) => (
           <View style={styles.one} key={index}>
             <View style={styles.onebox}>
-              <Text style={styles.onetext}>{location}</Text>
-              <Text>테스트입니다.</Text>
+              <View style={styles.onetextcontainer}>
+                <Text style={styles.onetext}>{location.facilityName}</Text>
+                <Text style={styles.onetextinfo}>({location.courseName})</Text>
+              </View>
               <TouchableOpacity onPress={() => toggleJim(index)}>
                 {jimStates[index] ? (
                   <ActiveJim style={styles.jim} />
@@ -300,6 +319,9 @@ const styles = StyleSheet.create({
     left: 50,
     fontFamily: 'PretendardSemiBold'
   },
+  onetextcontainer: {
+    flexDirection: 'column',
+  },
   info: {
     backgroundColor: '#252932',
     width: 80,
@@ -354,6 +376,11 @@ const styles = StyleSheet.create({
     fontSize: 16,
     width: 190,
     top: 16,
+    left: 16
+  },
+  onetextinfo: {
+    color: '#fff',
+    top: 20,
     left: 16
   },
   text: {

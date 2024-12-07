@@ -195,9 +195,10 @@ def process_user_selection():
         # JSON 데이터 파싱
         data = request.json
         token = data.get('token')  # 사용자 인증을 위한 JWT 토큰
+        region = data.get('region')  # 클라이언트에서 전달한 현재 위치 정보 (예: 서울, 부산 등)
         
-        if not token:
-            return jsonify({'error': '토큰이 필요합니다.'}), 400
+        if not token or not region:
+            return jsonify({'error': '토큰과 지역 정보가 필요합니다.'}), 400
         
         # JWT 검증 및 사용자 ID 추출
         try:
@@ -233,7 +234,7 @@ def process_user_selection():
                     필터링된_데이터 = KS_sum[
                         (KS_sum['ITEM_NM'] == item_nm.transform([단일_항목])[0]) &
                         (KS_sum['TROBL_TY_NM'] == 1) &  # TROBL_TY_NM == 1 조건
-                        (KS_sum['CTPRVN_NM'] == CTPRVN_NM.transform(['서울'])[0])  # 서울 조건
+                        (KS_sum['CTPRVN_NM'] == CTPRVN_NM.transform([region])[0])  # 전달된 지역으로 필터링
                     ]
 
                     # 데이터를 섞어서 무작위 추천
