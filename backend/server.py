@@ -8,8 +8,37 @@ import os
 import jwt
 import datetime as dt
 from dotenv import load_dotenv
+import pandas as pd
+from sklearn.tree import DecisionTreeClassifier
+from sklearn.model_selection import train_test_split
+from sklearn.preprocessing import LabelEncoder
+
+model = DecisionTreeClassifier(random_state=42)
 
 load_dotenv('.env')
+
+KS = pd.read_csv('KS_DSPSN_SVCH_UTILIIZA_CRSTAT_INFO_202410.csv')
+KS2 = pd.read_csv('KS_SVCH_UTILIIZA_CRSTAT_INFO_202410.csv')
+
+KS = KS[['FCLTY_NM', 'ITEM_NM','TROBL_TY_NM','COURSE_PRC','COURSE_NM','COURSE_NO','CTPRVN_NM','SIGNGU_NM']]
+
+KS.fillna("0", inplace=True)
+
+KS['TROBL_TY_NM'] = KS['TROBL_TY_NM'].apply(lambda x: 0 if x == '0' else 1)
+
+KS2 = KS2[['FCLTY_NM', 'ITEM_NM','COURSE_PRC','COURSE_NM','COURSE_NO','CTPRVN_NM','SIGNGU_NM']]
+
+KS2['TROBL_TY_NM'] = 0
+
+KS_sum = pd.concat([KS,KS2])
+
+KS_sum.drop_duplicates(subset="COURSE_NO",keep='first',inplace=True)
+item_nm = LabelEncoder()
+trobl_ty = LabelEncoder()
+CTPRVN_NM = LabelEncoder()
+
+X = KS_sum[['ITEM_NM','TROBL_TY_NM','CTPRVN_NM']]
+y = KS_sum[['COURSE_NO']]
 
 app = Flask(__name__)
 
@@ -132,39 +161,63 @@ def login():
     }), 200
 
 
-@app.route('/saveSelections', methods=['POST'])
-def save_selections():
-    data = request.json
-    token = data.get('token')
-    selected_items = data.get('selectedItems')
-
-    if not token or not selected_items:
-        return jsonify({'error': '토큰과 선택 항목을 제공해야 합니다.'}), 400
-
+@app.route('/process_user_selection', methods=['POST'])
+def process_user_selection():
     try:
-        # JWT 토큰 검증
-        payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
-        user_id = payload['user_id']
-    except jwt.ExpiredSignatureError:
-        return jsonify({'error': '토큰이 만료되었습니다.'}), 401
-    except jwt.InvalidTokenError:
-        return jsonify({'error': '유효하지 않은 토큰입니다.'}), 401
+        # JSON 데이터 파싱
+        data = request.json
+        token = data.get('token')  # 사용자 인증을 위한 JWT 토큰
 
-    # 사용자 선택 항목 저장
-    try:
-        # 선택 항목이 콤마로 구분된 문자열인지 확인
-        if isinstance(selected_items, str):
-            # selected_items를 그대로 사용하여 UserSelection에 저장
-            new_selection = userselection(user_id=user_id, selected_item=selected_items.strip())
-            db.session.add(new_selection)
-            db.session.commit()
+        if not token:
+            return jsonify({'error': '토큰이 필요합니다.'}), 400
 
-            return jsonify({'message': '선택 항목이 성공적으로 저장되었습니다.'}), 200
-        else:
-            return jsonify({'error': '선택 항목 형식이 잘못되었습니다.'}), 400
+        # JWT 검증 및 사용자 ID 추출
+        try:
+            payload = jwt.decode(token, app.config['SECRET_KEY'], algorithms=['HS256'])
+            user_id = payload['user_id']
+        except jwt.ExpiredSignatureError:
+            return jsonify({'error': '토큰이 만료되었습니다.'}), 401
+        except jwt.InvalidTokenError:
+            return jsonify({'error': '유효하지 않은 토큰입니다.'}), 401
+
+        # `userselection` 테이블에서 선택 항목 조회
+        selections = userselection.query.filter_by(user_id=user_id).all()
+
+        if not selections:
+            return jsonify({'error': '선택 항목이 없습니다.'}), 404
+
+        # `selected_item`에서 스포츠 항목만 추출
+        # (콤마로 구분된 문자열이라 가정하고 분리)
+        sports_items = []
+        for selection in selections:
+            sports_items.extend(selection.selected_item.split(','))  # 항목 분리
+
+        # 중복 제거 및 최소 3개 검증
+        sports_items = list(set(sports_items))  # 중복 제거
+        if len(sports_items) < 3:
+            return jsonify({'error': '스포츠 항목이 최소 3개 이상이어야 합니다.'}), 400
+
+        # LabelEncoder를 사용해 숫자로 변환
+        try:
+            스포츠 = item_nm.transform(sports_items)  # 스포츠 항목 변환
+        except ValueError as e:
+            return jsonify({'error': f'스포츠 변환 오류: {str(e)}'}), 400
+
+        # 모델 입력 데이터 구성
+        input_data = {
+            '스포츠': 스포츠.tolist(),  # LabelEncoder 변환 결과를 리스트로 반환
+            'user_id': user_id
+        }
+
+        # 결과 반환
+        return jsonify({
+            'message': '선택 항목이 성공적으로 처리되었습니다.',
+            'input_data': input_data
+        }), 200
+
     except Exception as e:
-        db.session.rollback()
-        return jsonify({'error': f'선택 항목 저장에 실패했습니다: {str(e)}'}), 500
+        return jsonify({'error': f'서버 오류: {str(e)}'}), 500
+
 
 if __name__ == '__main__':
     app.run(debug=True)

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { NavigationIndependentTree } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
@@ -17,12 +17,53 @@ import InactiveJim from '../../assets/JimInactive.svg';
 import ActiveJim from '../../assets/Jimactive.svg';
 import { normalize } from '../../normallize';
 import SearchIcon from '../../assets/Search.svg';
+import * as Location from "expo-location";
+import axios from "axios";
 
 const Tab = createBottomTabNavigator();
+
+const KAKAO_REST_API_KEY = "b2f1d72ae0832594f5212637f336234c";
 
 function HomeScreen() {
   // 각 버튼의 상태를 배열로 관리
   const [jimStates, setJimStates] = useState([false, false, false, false, false]);
+
+  const [addressText, setAddressText] = useState("위치 X");
+
+  useEffect(() => {
+    const fetchLocation = async () => {
+      try {
+        // 위치 권한 요청
+        const { status } = await Location.requestForegroundPermissionsAsync();
+        if (status !== "granted") {
+          setAddressText("위치 권한이 거부되었습니다.");
+          return;
+        }
+
+        // 현재 위치 가져오기
+        const location = await Location.getCurrentPositionAsync({});
+        const { latitude, longitude } = location.coords;
+
+        // 카카오 지도 API 호출
+        const response = await axios.get("https://dapi.kakao.com/v2/local/geo/coord2address.json", {
+          headers: { Authorization: `KakaoAK ${KAKAO_REST_API_KEY}` },
+          params: { x: longitude, y: latitude },
+        });
+
+        if (response.data && response.data.documents.length > 0) {
+          const address = response.data.documents[0].address;
+          setAddressText(address.region_1depth_name); // 시(city) 정보 추출
+        } else {
+          setAddressText("주소 정보를 가져올 수 없습니다.");
+        }
+      } catch (error) {
+        console.error(error);
+        setAddressText("위치 정보를 가져오는 중 오류 발생");
+      }
+    };
+
+    fetchLocation();
+  }, []);
 
   const [fontsLoaded] = useFonts({
     PretendardBold: require("../../assets/fonts/otf/Pretendard-Bold.otf"),
@@ -64,7 +105,7 @@ function HomeScreen() {
         </View>
         <View style={styles.address}>
           <Navi style={styles.addressarrow} />
-          <Text style={styles.addresstext}>화천리</Text>
+          <Text style={styles.addresstext}>{addressText}</Text>
         </View>
       </View>
       <View style={styles.onecontainer}>
