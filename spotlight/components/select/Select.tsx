@@ -49,10 +49,12 @@ export default function Select({ navigation }: Props) {
     const selectionsString = selectedItems.join(',');
   
     try {
-      const response = await axios.post('https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/saveSelections', {
+      const response = await axios.post('http://127.0.0.1:5000/saveSelections', {
         token, // JWT 토큰 전송
         selectedItems: selectionsString, // 콤마로 구분된 문자열 전송
       });
+
+      console.log(response)
   
       if (response.status === 200) {
         alert("선택 항목이 성공적으로 저장되었습니다.");
