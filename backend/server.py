@@ -323,6 +323,10 @@ def save_selections():
         db.session.rollback()
         return jsonify({'error': f'선택 항목 저장에 실패했습니다: {str(e)}'}), 500
 
+@app.route('/logout', methods=['POST'])
+def logout():
+    # 클라이언트 측에서 JWT 토큰 삭제를 요청했을 때
+    return jsonify({'message': '로그아웃 성공', 'token': None}), 200
 
 if __name__ == '__main__':
     app.run(debug=True)

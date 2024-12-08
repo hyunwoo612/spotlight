@@ -2,7 +2,8 @@ import React, { useState, useEffect } from 'react';
 import { useFonts } from 'expo-font';
 import { NavigationIndependentTree } from '@react-navigation/native';
 import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import { View, Text, StyleSheet, Platform, TextInput, TouchableOpacity, ScrollView } from 'react-native';
+import { View, Text, StyleSheet, Platform, TextInput, TouchableOpacity, ScrollView, Alert } from 'react-native';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import InactiveHouse from '../../assets/House_01.svg';
 import ActiveHouse from '../../assets/House_02.svg';
 import InActiveHeart from '../../assets/Heart_01.svg';
@@ -21,6 +22,8 @@ import * as Location from "expo-location";
 import axios from "axios";
 import { useAuth } from '../../context/AuthContext';
 import { WebView } from 'react-native-webview';
+import { StackScreenProps } from '@react-navigation/stack';
+import { RootStackParamList } from '../../types/navigation';
 
 const Tab = createBottomTabNavigator();
 
@@ -41,6 +44,8 @@ type LocationItem = {
   facilityName: string;
   courseName: string;
 };
+
+type Props = StackScreenProps<RootStackParamList, 'Home'>;
 
 function HomeScreen() {
   // 각 버튼의 상태를 배열로 관리
@@ -80,7 +85,7 @@ function HomeScreen() {
 
           // 위치 정보와 함께 사용자 선택 가져오기
           const userSelectionResponse = await axios.post(
-            'http://127.0.0.1:5000/process_user_selection',
+            'https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/process_user_selection',
             { token: token, region: address.region_1depth_name },  // 현재 위치를 서버에 전달
             {
               headers: {
@@ -192,7 +197,7 @@ type LocationCoords = {
   longitude: number;
 };
 
-function ProfileScreen() {
+function ProfileScreen({ navigation } : Props) {
   const [addressText, setAddressText] = useState("위치 X");
   const [location, setLocation] = useState<LocationCoords | null>(null); // 타입 지정
 
@@ -225,28 +230,52 @@ function ProfileScreen() {
     fetchLocation();
   }, []);
 
-  const htmlContent = `
-  <!DOCTYPE html>
-  <html>
-  <head>
-    <meta charset="utf-8"/>
-    <title>Kakao 지도 시작하기</title>
-  </head>
-  <body>
-    <div id="map" style="width:500px;height:400px;"></div>
-    <script type="text/javascript" src="//dapi.kakao.com/v2/maps/sdk.js?appkey=0cd1fefc92df0a90f8cbd111c9d76469"></script>
-    <script>
-      var container = document.getElementById('map');
-      var options = {
-        center: new kakao.maps.LatLng(33.450701, 126.570667),
-        level: 3
-      };
+  const handleLogout = async () => {
+    try {
+      // 저장된 토큰 삭제
+      await AsyncStorage.removeItem('token');
 
-      var map = new kakao.maps.Map(container, options);
-    </script>
-  </body>
-  </html>
-`;
+      // 서버에 로그아웃 요청 (선택 사항)
+      const response = await fetch('http://서버주소/logout', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
+      const data = await response.json();
+
+      if (response.ok) {
+        Alert.alert('로그아웃 성공', data.message);
+        // 로그인 화면으로 이동
+        navigation.replace('Login');
+      } else {
+        Alert.alert('로그아웃 실패', data.error || '알 수 없는 오류가 발생했습니다.');
+      }
+    } catch (error) {
+      console.error(error);
+      Alert.alert('로그아웃 실패', '네트워크 오류가 발생했습니다.');
+    }
+  };
+
+  const html = `<html>
+      <head>
+          <meta name="viewport" content="width=device-width, initial-scale=1">
+          <script type="text/javascript" src="https://dapi.kakao.com/v2/maps/sdk.js?appkey=0cd1fefc92df0a90f8cbd111c9d76469"></script>
+      </head>
+      <body >
+          <div id="map" style="width:500px;height:400px;"></div>
+          <script type="text/javascript">
+              (function () {
+                  const container = document.getElementById('map'); //지도를 담을 영역의 DOM 레퍼런스
+                  const options = { //지도를 생성할 때 필요한 기본 옵션
+                      center: new kakao.maps.LatLng(33.450701, 126.570667), //지도의 중심좌표.
+                      level: 3 //지도의 레벨(확대, 축소 정도)
+                  };
+
+                  const map = new kakao.maps.Map(container, options); //지도 생성 및 객체 리턴
+
+              })();
+          </script>
+      </body>
+      </html>    `;
 
 
   return (
@@ -276,13 +305,32 @@ function ProfileScreen() {
       {/* 지도 영역 */}
       <View style={styles.mapContainer}>
         <Text style={styles.mapLabel}>현재 위치</Text>
-        {location && (
-          <WebView
-            originWhitelist={['*']}
-            source={{ html: htmlContent }}
-            style={styles.map}
-          />
-        )}
+        <WebView
+          originWhitelist={['*']}
+          source={{
+            html: `
+              <!DOCTYPE html>
+              <html lang="en">
+                <head>
+                  <meta charset="UTF-8">
+                  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                  <title>WebView Test</title>
+                </head>
+                <body>
+                  <h1>현재 위치</h1>
+                  <p>HTML 렌더링 테스트</p>
+                </body>
+              </html>
+            `
+          }}
+          style={{ width: '100%', height: 400 }}
+          javaScriptEnabled={true}
+          onError={(syntheticEvent) => {
+            const { nativeEvent } = syntheticEvent;
+            console.warn('WebView error: ', nativeEvent);
+          }}
+          onLoad={() => console.log('WebView loaded successfully')}
+        />
       </View>
 
       {/* 고객센터 링크 */}
@@ -296,7 +344,7 @@ function ProfileScreen() {
 
       {/* 로그아웃 버튼 */}
       <TouchableOpacity style={styles.logoutButton}>
-        <Text style={styles.logoutText}>로그아웃</Text>
+        <Text style={styles.logoutText} onPress={handleLogout}>로그아웃</Text>
       </TouchableOpacity>
     </View>
   );
@@ -316,7 +364,7 @@ function SearchScreen() {
     }
   
     try {
-      const response = await axios.post('http://127.0.0.1:5000/search', { FCLTY_NM: searchText });
+      const response = await axios.post('https://port-0-flask-m49z6h7qc9e231b8.sel4.cloudtype.app/search', { FCLTY_NM: searchText });
       console.log("검색 결과:", response.data);
   
       // 결과를 검증
